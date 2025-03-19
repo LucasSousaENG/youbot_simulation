@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="world" default="fabrica2"/>
+  <arg name="init_pos_x" default="0.0"/>
+  <arg name="init_pos_y" default="0.0"/>
+  <arg name="init_pos_z" default="0.0"/>
+
+  <arg name="kinect_pos_z" default="3.0"/>
+  <arg name="paused" default="true"/>
+
+  <!-- launch world -->
+  <include file="$(find youbot_gazebo_worlds)/launch/$(arg world).launch">
+    <arg name="paused" value="$(arg paused)"/> <!-- Pass the paused parameter to empty_world.launch -->
+  </include>
+
+  <param name="robot_description" command="$(find xacro)/xacro.py $(find youbot_description)/robots/youbot.urdf.xacro" />
+
+  <param name="kinect_camera" command="$(find xacro)/xacro.py $(find youbot_description)/robots/kinect.urdf.xacro" />
+
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_robot" respawn="false" output="screen"
+    args="-param robot_description
+          -urdf
+          -x $(arg init_pos_x)
+          -y $(arg init_pos_y)
+          -z $(arg init_pos_z)
+          -model youbot">
+  </node>
+
+    <node pkg="gazebo_ros" type="spawn_model" name="spawn_kinect" respawn="false" output="screen"
+    args="-param kinect_camera
+          -urdf
+          -x $(arg init_pos_x)
+          -y $(arg init_pos_y)
+          -z $(arg kinect_pos_z)
+          -model kinect">
+  </node>
+
+  <!-- launch joint state controller -->
+  <include file="$(find youbot_gazebo_control)/launch/joint_state_controller.launch" />
+
+  <!-- launch arm and gripper controller -->
+  <include file="$(find youbot_gazebo_control)/launch/arm_controller.launch" />
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="100.0" />
+  </node>
+
+</launch>
